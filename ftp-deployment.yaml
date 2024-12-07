@@ -1,37 +1,50 @@
-
-apiVersion: apps/v1beta1 # for versions before 1.6.0 use extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-ftp
+  name: ftp-server
 spec:
-  replicas: 3
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ftp
   template:
     metadata:
       labels:
-        app: my-ftp
+        app: ftp
     spec:
-      volumes:
-      - name: task-pv-storage
-        persistentVolumeClaim:
-          claimName: task-pv-claim
       containers:
-      - name: my-ftp-container
+      - name: vsftpd
         image: fauria/vsftpd
         ports:
-        - containerPort: 21
-          protocol: TCP
-          name: "ftp-server"
-        volumeMounts:
-        - mountPath: "/home/vsftpd"
-          name: task-pv-storage
+        - containerPort: 21    # FTP control port
+        - containerPort: 30000 # Passive port 1
+        - containerPort: 30001 # Passive port 2
+        - containerPort: 30002 # Passive port 3
+        - containerPort: 30003 # Passive port 4
+        - containerPort: 30004 # Passive port 5
+        - containerPort: 30005 # Passive port 6
+        - containerPort: 30006 # Passive port 7
+        - containerPort: 30007 # Passive port 8
+        - containerPort: 30008 # Passive port 9
+        - containerPort: 30009 # Passive port 10
         env:
         - name: FTP_USER
-          value: "user"
+          value: "ftpuser"
         - name: FTP_PASS
-          value: "pass1234"
-        #- name: PASV_ADDRESS
-        #  value: "127.0.0.1"
-        #- name: PASV_MIN_PORT
-        #  value: "21100"
-        #- name: PASV_MAX_PORT
-        #  value: "21110"
+          value: "ftppassword"
+        - name: PASV_MIN_PORT
+          value: "30000"
+        - name: PASV_MAX_PORT
+          value: "30009"
+        - name: PASV_ADDRESS
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        volumeMounts:
+        - name: ftp-data
+          mountPath: /home/vsftpd
+      volumes:
+      - name: ftp-data
+        persistentVolumeClaim:
+          claimName: ftp-pvc
+
